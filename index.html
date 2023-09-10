@@ -64,5 +64,64 @@
       }
     </style>
   </head>
-  <body></body>
+  <body>
+    <main class="wrapper">
+      <h1 class="sr-only">Age calculator app</h1>
+      <form class="form">
+        <label class="unit">
+          <strong class="label">Day</strong>
+          <input
+            min="1"
+            max="31"
+            class="input"
+            type="number"
+            placeholder="DD"
+            inputmode="numeric"
+            aria-label="Enter your birth day"
+          />
+          <p id="day-validation" role="alert" aria-live="assertive"></p>
+        </label>
+        <label class="unit">
+          <strong class="label">Month</strong>
+          <input
+            min="1"
+            max="12"
+            class="input"
+            type="number"
+            placeholder="MM"
+            inputmode="numeric"
+            aria-label="Enter your birth month"
+          />
+          <p id="month-validation" role="alert" aria-live="assertive"></p>
+        </label>
+        <label class="unit">
+          <strong class="label">Year</strong>
+          <input
+            class="input"
+            type="number"
+            placeholder="YYYY"
+            inputmode="numeric"
+            aria-label="Enter your birth year"
+          />
+          <p id="year-validation" role="alert" aria-live="assertive"></p>
+        </label>
+        <button class="submit" type="submit" aria-label="calculate">
+          <!-- prettier-ignore -->
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="46" height="44" viewBox="0 0 46 44"><g fill="none" stroke="#FFF" stroke-width="2"><path d="M1 22.019C8.333 21.686 23 25.616 23 44M23 44V0M45 22.019C37.667 21.686 23 25.616 23 44"/></g></svg>
+        </button>
+      </form>
+
+      <article class="result">
+        <h2 class="unit">
+          <em><span class="num">--</span> years</em>
+        </h2>
+        <h2 class="unit">
+          <em><span class="num">--</span> months</em>
+        </h2>
+        <h2 class="unit">
+          <em><span class="num">--</span> days</em>
+        </h2>
+      </article>
+    </main>
+  </body>
 </html>
