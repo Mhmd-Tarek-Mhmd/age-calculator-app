@@ -76,6 +76,7 @@
         padding-inline: 24px;
         padding-block: 40px 45px;
         background-color: var(--white);
+        box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
       }
 
       .form {
@@ -169,6 +170,7 @@
       }
 
       .result {
+        font-style: italic;
         color: var(--off-black);
       }
       .result .unit {
@@ -206,10 +208,10 @@
           font-size: 12px;
         }
         .form .submit {
-          width: 90px;
-          height: 90px;
-          bottom: -45px;
-          left: calc(100% - 90px);
+          width: 94px;
+          height: 94px;
+          bottom: -47px;
+          left: calc(100% - 94px);
         }
 
         .result {
@@ -218,6 +220,10 @@
           font-size: 6.3rem;
         }
         .result .num {
+        }
+        .result .num.spacing {
+          letter-spacing: 18px;
+          margin-inline-end: -30px;
         }
       }
     </style>
@@ -234,9 +240,7 @@
             required
             name="day"
             autofocus
-            type="text"
-            minlength="1"
-            maxlength="2"
+            type="number"
             class="input"
             placeholder="DD"
             inputmode="numeric"
@@ -252,9 +256,7 @@
             max="12"
             required
             name="month"
-            type="text"
-            minlength="1"
-            maxlength="2"
+            type="number"
             class="input"
             placeholder="MM"
             inputmode="numeric"
@@ -291,15 +293,9 @@
       </form>
 
       <article class="result">
-        <h2 class="unit">
-          <em><span class="num years">--</span> years</em>
-        </h2>
-        <h2 class="unit">
-          <em><span class="num months">--</span> months</em>
-        </h2>
-        <h2 class="unit">
-          <em><span class="num days">--</span> days</em>
-        </h2>
+        <h2 class="unit"><span class="num spacing years">--</span> years</h2>
+        <h2 class="unit"><span class="num spacing months">--</span> months</h2>
+        <h2 class="unit"><span class="num spacing days">--</span> days</h2>
       </article>
     </main>
 
@@ -318,13 +314,13 @@
           Helpers
         */
 
-        const handleValidationMsg = (inputName, msg) => {
+        const handleValidationMsg = (inputName, msg, isFocus = true) => {
           isInvalid = true;
           $(`#${inputName}-validation`).innerHTML = msg;
           $(`.form .unit:has(.input[name=${inputName}])`).classList.add(
             "invalid"
           );
-          $(".unit.invalid .input").focus();
+          isFocus && $(".unit.invalid .input").focus();
         };
 
         const handleClearValidation = (inputName) => {
@@ -339,6 +335,7 @@
           if (animate.num[name] > num)
             return cancelAnimationFrame(animate.frameRef[name]);
 
+          $$(".num.spacing")?.forEach((num) => num.classList.remove("spacing"));
           animate.frameRef[name] = requestAnimationFrame(() => {
             $(`.result .${name}`).innerHTML = animate.num[name];
             animate.num[name]++;
@@ -347,7 +344,8 @@
         };
 
         const calculate = (inputDate) => {
-          const daysInYear = 365.242199, daysInMonth = 30.4368499;
+          const daysInYear = 365.242199,
+            daysInMonth = 30.4368499;
           const diffDays =
             (date.getTime() - inputDate.getTime()) / (1000 * 60 * 60 * 24);
 
@@ -365,6 +363,7 @@
             num: { days: 0, months: 0, years: 0 },
             frameRef: { days: null, months: null, years: null },
           };
+          $(".input[name=day]").focus();
           $$(".num").forEach((num) => (num.innerHTML = "--"));
           $$(".input").forEach((inp) => {
             inp.value = "";
@@ -376,10 +375,18 @@
           Events
         */
 
+        // window.onmouseup = getSelectedText;
+
         $$(".input").forEach((input) => {
-          // Prevent NaN values
+          // Prevent NaN or invalid values
           input.addEventListener("keypress", (e) => {
-            if (isNaN(+e.key) && e.key !== "Enter") e.preventDefault();
+            if (
+              (isNaN(+e.key) && e.key !== "Enter") ||
+              (input.name !== "year" &&
+                input.value.length === 2 &&
+                getSelection().toString() !== input.value)
+            )
+              e.preventDefault();
           });
 
           // Input Validation
@@ -388,7 +395,7 @@
 
             // Check if inputs have no value
             if (input.validity.valueMissing) {
-              handleValidationMsg(input.name, "This field is required");
+              handleValidationMsg(input.name, "This field is required", false);
               return;
             }
 
@@ -399,7 +406,11 @@
               input.validity.rangeOverflow ||
               input.validity.rangeUnderflow
             ) {
-              handleValidationMsg(input.name, `Must be a valid ${input.name}`);
+              handleValidationMsg(
+                input.name,
+                `Must be a valid ${input.name}`,
+                false
+              );
             }
           });
         });
