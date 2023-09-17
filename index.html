@@ -97,7 +97,7 @@
         color: var(--smokey-grey);
         text-transform: uppercase;
       }
-      .form .unit:has(:invalid) .label {
+      .form .unit.invalid .label {
         color: var(--light-red);
       }
       .form .input {
@@ -122,7 +122,8 @@
       .form .input:focus {
         border-color: var(--purple);
       }
-      .form .input:invalid {
+      .form .unit.invalid .input {
+        caret-color: var(--light-red);
         border-color: var(--light-red);
       }
       .form .input::placeholder {
@@ -141,7 +142,7 @@
         will-change: opacity;
         color: var(--light-red);
       }
-      .form .unit:has(:invalid) [role="alert"] {
+      .form .unit.invalid [role="alert"] {
         opacity: 0.8;
       }
       .form .submit {
@@ -224,30 +225,35 @@
   <body>
     <main class="wrapper">
       <h1 class="sr-only">Age calculator app</h1>
-      <form class="form">
+      <form class="form" novalidate>
         <label class="unit">
           <strong class="label">Day</strong>
           <input
             min="1"
             max="31"
+            required
             name="day"
+            autofocus
+            minlength="1"
+            maxlength="2"
             class="input"
-            type="number"
             placeholder="DD"
             inputmode="numeric"
             title="Enter your birth day"
             aria-label="Enter your birth day"
           />
-          <span id="day-validation" role="alert" aria-live="assertive"> </span>
+          <span id="day-validation" role="alert" aria-live="assertive"></span>
         </label>
         <label class="unit">
           <strong class="label">Month</strong>
           <input
             min="1"
             max="12"
+            required
             name="month"
+            minlength="1"
+            maxlength="2"
             class="input"
-            type="number"
             placeholder="MM"
             inputmode="numeric"
             title="Enter your birth month"
@@ -258,9 +264,11 @@
         <label class="unit">
           <strong class="label">Year</strong>
           <input
+            required
             name="year"
+            minlength="4"
+            maxlength="4"
             class="input"
-            type="number"
             placeholder="YYYY"
             inputmode="numeric"
             title="Enter your birth year"
@@ -281,15 +289,170 @@
 
       <article class="result">
         <h2 class="unit">
-          <em><span class="num">--</span> years</em>
+          <em><span class="num years">--</span> years</em>
         </h2>
         <h2 class="unit">
-          <em><span class="num">--</span> months</em>
+          <em><span class="num months">--</span> months</em>
         </h2>
         <h2 class="unit">
-          <em><span class="num">--</span> days</em>
+          <em><span class="num days">--</span> days</em>
         </h2>
       </article>
     </main>
+
+    <script>
+      (function () {
+        let isInvalid = false;
+        const date = new Date();
+        const $ = document.querySelector.bind(document);
+        const $$ = document.querySelectorAll.bind(document);
+        let animate = {
+          num: { days: 0, months: 0, years: 0 },
+          frameRef: { days: null, months: null, years: null },
+        };
+
+        /*
+          Helpers
+        */
+
+        const handleValidationMsg = (inputName, msg) => {
+          isInvalid = true;
+          $(`#${inputName}-validation`).innerHTML = msg;
+          $(`.form .unit:has(.input[name=${inputName}])`).classList.add(
+            "invalid"
+          );
+          $(".unit.invalid .input").focus();
+        };
+
+        const handleClearValidation = (inputName) => {
+          isInvalid = false;
+          $(`#${inputName}-validation`).innerHTML = "";
+          $(`.form .unit:has(.input[name=${inputName}])`).classList.remove(
+            "invalid"
+          );
+        };
+
+        const animateNum = (name, num) => {
+          if (animate.num[name] > num)
+            return cancelAnimationFrame(animate.frameRef[name]);
+
+          animate.frameRef[name] = requestAnimationFrame(() => {
+            $(`.result .${name}`).innerHTML = animate.num[name];
+            animate.num[name]++;
+            animateNum(name, num);
+          });
+        };
+
+        const calculate = (inputDate) => {
+          const daysInYear = 365.242199, daysInMonth = 30.4368499;
+          const diffDays =
+            (date.getTime() - inputDate.getTime()) / (1000 * 60 * 60 * 24);
+
+          animateNum("years", Math.floor(diffDays / daysInYear));
+          animateNum(
+            "months",
+            Math.floor((diffDays % daysInYear) / daysInMonth)
+          );
+          animateNum("days", Math.floor((diffDays % daysInYear) % daysInMonth));
+        };
+
+        const reset = () => {
+          isInvalid = false;
+          animate = {
+            num: { days: 0, months: 0, years: 0 },
+            frameRef: { days: null, months: null, years: null },
+          };
+          $$(".num").forEach((num) => (num.innerHTML = "--"));
+          $$(".input").forEach((inp) => {
+            inp.value = "";
+            handleClearValidation(inp.name);
+          });
+        };
+
+        /*
+          Events
+        */
+
+        $$(".input").forEach((input) => {
+          // Prevent NaN values
+          input.addEventListener("keypress", (e) => {
+            if (isNaN(+e.key) && e.key !== "Enter") e.preventDefault();
+          });
+
+          // Input Validation
+          input.addEventListener("input", () => {
+            handleClearValidation(input.name);
+
+            // Check if inputs have no value
+            if (input.validity.valueMissing) {
+              handleValidationMsg(input.name, "This field is required");
+              return;
+            }
+
+            // Check if inputs have proper values
+            if (
+              input.validity.tooLong ||
+              input.validity.tooShort ||
+              input.validity.rangeOverflow ||
+              input.validity.rangeUnderflow
+            ) {
+              handleValidationMsg(input.name, `Must be a valid ${input.name}`);
+            }
+          });
+        });
+
+        $(".form").addEventListener("submit", (e) => {
+          e.preventDefault();
+
+          // Check if all inputs are valid
+          if (isInvalid) {
+            $(".unit.invalid .input").focus();
+            return;
+          }
+
+          const day = +$(".input[name=day]").value;
+          const year = +$(".input[name=year]").value;
+          const month = +$(".input[name=month]").value;
+          const inputDate = new Date(year, month - 1, day);
+
+          // Check if inputs have no value
+          if (!day || !month | !year) {
+            $$(".input").forEach(
+              (inp) =>
+                !inp.value &&
+                handleValidationMsg(inp.name, "This field is required")
+            );
+            return;
+          }
+
+          // Check if date is invalid
+          if (day > new Date(year, month, 0).getDate()) {
+            handleValidationMsg("day", "Must be a valid date");
+            return;
+          }
+
+          // Check if date in the past
+          if (year > date.getFullYear()) {
+            handleValidationMsg("year", "Must be in the past");
+            return;
+          }
+          if (month > date.getMonth() && year === date.getFullYear()) {
+            handleValidationMsg("month", "Must be in the past");
+            return;
+          }
+          if (
+            day > date.getDate() &&
+            month.value === date.getMonth() + 1 &&
+            year.value === date.getFullYear()
+          ) {
+            handleValidationMsg("day", "Must be in the past");
+            return;
+          }
+
+          reset();
+          calculate(inputDate);
+        });
+      })();
+    </script>
   </body>
 </html>
