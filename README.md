@@ -7,4 +7,4 @@ This is a solution to the [Age calculator app challenge on Frontend Mentor](http
 ## Links
 
 - Live Site [URL](https://mhmd-tarek-mhmd.github.io/age-calculator-app/)
-- Solution [URL](https://www.frontendmentor.io/solutions/agecalculatorapp-9FL-wMkzk8)
+- Solution [URL](https://www.frontendmentor.io/solutions/agecalculatorapp-dxNhE92vse)
